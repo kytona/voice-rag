@@ -1,7 +1,7 @@
 # voice-rag
 
 [![PyPI version](https://img.shields.io/pypi/v/voice-rag)](https://pypi.org/project/voice-rag/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kytona/voice-rag/blob/main/LICENSE)
 [![Python](https://img.shields.io/pypi/pyversions/voice-rag)](https://pypi.org/project/voice-rag/)
 
 `voice-rag` is a Python package for voice-oriented RAG pipelines: ingest local documents, store them in Qdrant, serve an OpenAI-style chat-completions webhook, and swap voice or LLM providers behind a stable interface.
@@ -19,6 +19,7 @@
 
 ```bash
 pip install "voice-rag[elevenlabs]"
+export OPENAI_API_KEY=your_api_key_here
 voice-rag init
 ```
 
@@ -30,6 +31,7 @@ voice-rag serve
 ```
 
 Point your voice platform to `http://localhost:8000/v1` if it expects an OpenAI-style Custom LLM endpoint.
+By default, `voice-rag` uses an embedded local Qdrant store in `.qdrant`, so you do not need to start a separate Qdrant server unless you set `vector_store.url`.
 
 ## CLI
 
@@ -55,7 +57,7 @@ app = agent.create_app()
 
 ## Configuration
 
-`voice-rag` reads configuration from `voice-rag.yaml` or environment variables.
+`voice-rag` reads configuration from `voice-rag.yaml` and environment variables. It does not auto-load `.env` files.
 
 | Key | Env | Default |
 | --- | --- | --- |
@@ -63,11 +65,12 @@ app = agent.create_app()
 | `llm.provider` | `LLM_PROVIDER` | `openai` |
 | `llm.model` | `LLM_MODEL` | `gpt-4o-mini` |
 | `embedding.model` | `EMBEDDING_MODEL` | `text-embedding-3-small` |
+| `vector_store.url` | `VECTOR_STORE_URL` | empty; use local `.qdrant` |
 | `vector_store.collection_name` | `VECTOR_STORE_COLLECTION_NAME` | `knowledge_base` |
 | `vector_store.local_path` | `VECTOR_STORE_LOCAL_PATH` | `.qdrant` |
 | `server.port` | `SERVER_PORT` | `8000` |
 
-See [voice-rag.yaml](voice-rag.yaml) for the full schema.
+See [voice-rag.yaml](https://github.com/kytona/voice-rag/blob/main/voice-rag.yaml) for the full schema.
 
 ## Development
 
@@ -76,4 +79,4 @@ pip install -e ".[all,dev]"
 pytest tests/ -v
 ```
 
-Use [CONTRIBUTING.md](CONTRIBUTING.md) for connector and packaging guidelines.
+Use [CONTRIBUTING.md](https://github.com/kytona/voice-rag/blob/main/CONTRIBUTING.md) for connector and packaging guidelines.

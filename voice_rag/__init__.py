@@ -1,11 +1,13 @@
 """voice-rag: Provider-agnostic voice RAG pipeline."""
 
 from voice_rag.agent import KnowledgeAgent
+from voice_rag._version import __version__
 from voice_rag.core.config import VoiceRagConfig
 from voice_rag.core.models import ChatMessage, Chunk, Document, RetrievedChunk
 from voice_rag.server import create_app
 
 __all__ = [
+    "__version__",
     "KnowledgeAgent",
     "VoiceRagConfig",
     "ChatMessage",

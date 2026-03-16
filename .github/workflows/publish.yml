@@ -22,6 +22,12 @@ jobs:
       - name: Run smoke test
         run: bash scripts/smoke_test.sh
 
+      - name: Build artifacts
+        run: python -m build --no-isolation
+
+      - name: Check artifacts
+        run: python -m twine check dist/*
+
   build:
     needs: smoke-test
     runs-on: ubuntu-latest
@@ -34,10 +40,13 @@ jobs:
           python-version: "3.11"
 
       - name: Install build tools
-        run: pip install hatch
+        run: pip install build twine
 
       - name: Build
-        run: hatch build
+        run: python -m build --no-isolation
+
+      - name: Check artifacts
+        run: python -m twine check dist/*
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v4

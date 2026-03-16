@@ -17,7 +17,8 @@ DEFAULT_CONFIG = {
     "vector_store": {
         "provider": "qdrant",
         "collection_name": "knowledge_base",
-        "in_memory": True,
+        "local_path": ".qdrant",
+        "url": "",
     },
     "ingestion": {"chunk_size": 800, "chunk_overlap": 120},
     "server": {"host": "0.0.0.0", "port": 8000},
@@ -37,6 +38,12 @@ def _load_config(config_path: str | None):
 def _format_serve_url(host: str, port: int) -> str:
     display_host = "localhost" if host == "0.0.0.0" else host
     return f"http://{display_host}:{port}/v1"
+
+
+def _describe_vector_store(config) -> str:
+    if config.vector_store.url:
+        return f"remote Qdrant at {config.vector_store.url}"
+    return f"local embedded Qdrant at {config.vector_store.local_path}"
 
 
 @click.command()
@@ -120,11 +127,14 @@ def inspect_cmd(config_path: str | None):
 
 
 @click.command()
-def doctor_cmd():
+@click.option("--config", "config_path", default=None, help="Path to voice-rag.yaml config file.")
+def doctor_cmd(config_path: str | None):
     """Check environment and connectivity."""
+    config = _load_config(config_path)
     checks = {
         "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
-        "VOICE_RAG_LLM_API_KEY": os.environ.get("VOICE_RAG_LLM_API_KEY"),
+        "LLM_PROVIDER": os.environ.get("LLM_PROVIDER"),
+        "EMBEDDING_MODEL": os.environ.get("EMBEDDING_MODEL"),
     }
 
     for key, value in checks.items():
@@ -133,19 +143,24 @@ def doctor_cmd():
         else:
             click.echo(f"  [--] {key} not set")
 
-    try:
-        from qdrant_client import QdrantClient
-        client = QdrantClient(url="http://localhost:6333", timeout=3)
-        client.get_collections()
-        click.echo("  [OK] Qdrant reachable at localhost:6333")
-    except Exception:
-        click.echo("  [--] Qdrant not reachable at localhost:6333")
+    click.echo(f"  [OK] Vector store mode: {_describe_vector_store(config)}")
 
-    config_path = Path("voice-rag.yaml")
-    if config_path.exists():
-        click.echo(f"  [OK] Config file found: {config_path}")
+    if config.vector_store.url:
+        try:
+            from qdrant_client import QdrantClient
+
+            client = QdrantClient(url=config.vector_store.url, timeout=3)
+            client.get_collections()
+            click.echo(f"  [OK] Qdrant reachable at {config.vector_store.url}")
+        except Exception:
+            click.echo(f"  [--] Qdrant not reachable at {config.vector_store.url}")
+
+    resolved_config_path = Path(config_path) if config_path else Path("voice-rag.yaml")
+    if resolved_config_path.exists():
+        click.echo(f"  [OK] Config file found: {resolved_config_path}")
     else:
-        click.echo("  [--] No voice-rag.yaml found (run: voice-rag init)")
+        expected = "voice-rag.yaml" if config_path is None else config_path
+        click.echo(f"  [--] No config file found at {expected} (run: voice-rag init)")
 
 
 @click.command()

@@ -27,6 +27,10 @@ _PARSERS = {
 }
 
 
+def _supported_providers(values: dict[str, str]) -> str:
+    return ", ".join(sorted(values))
+
+
 def _import_class(dotted_path: str) -> type:
     module_path, class_name = dotted_path.rsplit(":", 1)
     module = importlib.import_module(module_path)
@@ -72,20 +76,32 @@ class KnowledgeAgent:
     def _init_components(self) -> None:
         # Voice adapter
         adapter_path = _VOICE_ADAPTERS.get(self.config.voice.provider)
-        if adapter_path:
-            cls = _import_class(adapter_path)
-            self._voice_adapter = cls()
+        if not adapter_path:
+            raise ValueError(
+                f"Unsupported voice provider '{self.config.voice.provider}'. "
+                f"Supported: {_supported_providers(_VOICE_ADAPTERS)}."
+            )
+        cls = _import_class(adapter_path)
+        self._voice_adapter = cls()
 
         # LLM client
         llm_path = _LLM_CLIENTS.get(self.config.llm.provider)
-        if llm_path:
-            cls = _import_class(llm_path)
-            if self.config.llm.provider == "openai":
-                self._llm_client = cls(api_key=self.config.llm.api_key, base_url=self.config.llm.base_url)
-            else:
-                self._llm_client = cls(api_key=self.config.llm.api_key)
+        if not llm_path:
+            raise ValueError(
+                f"Unsupported llm provider '{self.config.llm.provider}'. "
+                f"Supported: {_supported_providers(_LLM_CLIENTS)}."
+            )
+        cls = _import_class(llm_path)
+        if self.config.llm.provider == "openai":
+            self._llm_client = cls(api_key=self.config.llm.api_key, base_url=self.config.llm.base_url)
+        else:
+            self._llm_client = cls(api_key=self.config.llm.api_key)
 
         # Embeddings
+        if self.config.embedding.provider != "openai":
+            raise ValueError(
+                f"Unsupported embedding provider '{self.config.embedding.provider}'. Supported: openai."
+            )
         from voice_rag.connectors.embeddings.openai import OpenAIDenseEmbedding, FastEmbedSparseEmbedding
         self._dense_embedder = OpenAIDenseEmbedding(
             api_key=self.config.embedding.api_key,
@@ -95,11 +111,14 @@ class KnowledgeAgent:
         self._sparse_embedder = FastEmbedSparseEmbedding(model=self.config.ingestion.bm25_model)
 
         # Vector store
+        if self.config.vector_store.provider != "qdrant":
+            raise ValueError(
+                f"Unsupported vector store provider '{self.config.vector_store.provider}'. Supported: qdrant."
+            )
         from voice_rag.connectors.vector_stores.qdrant import QdrantStore
         self._vector_store = QdrantStore(
             collection_name=self.config.vector_store.collection_name,
             url=self.config.vector_store.url,
-            in_memory=self.config.vector_store.in_memory,
             local_path=self.config.vector_store.local_path,
             dense_prefetch_limit=self.config.vector_store.dense_prefetch_limit,
             sparse_prefetch_limit=self.config.vector_store.sparse_prefetch_limit,

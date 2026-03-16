@@ -8,14 +8,14 @@ from voice_rag.core.models import Chunk, RetrievedChunk
 
 class QdrantStore:
     def __init__(self, client: QdrantClient | None = None, collection_name: str = "knowledge_base",
-                 url: str = "http://localhost:6333", in_memory: bool = False, local_path: str = ".qdrant",
+                 url: str = "", local_path: str = ".qdrant",
                  dense_prefetch_limit: int = 20, sparse_prefetch_limit: int = 20):
         if client is not None:
             self._client = client
-        elif in_memory:
-            self._client = QdrantClient(path=local_path)
-        else:
+        elif url:
             self._client = QdrantClient(url=url)
+        else:
+            self._client = QdrantClient(path=local_path)
         self._collection_name = collection_name
         self._dense_prefetch_limit = dense_prefetch_limit
         self._sparse_prefetch_limit = sparse_prefetch_limit

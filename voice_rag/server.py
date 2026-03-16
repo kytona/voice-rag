@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from voice_rag._version import __version__
 from voice_rag.core.retrieval import build_augmented_messages
 from voice_rag.core.streaming import extract_latest_user_message
 
@@ -23,7 +24,7 @@ class ChatCompletionRequest(BaseModel):
 
 
 def create_app(agent: KnowledgeAgent) -> FastAPI:
-    app = FastAPI(title="voice-rag", version="0.1.0")
+    app = FastAPI(title="voice-rag", version=__version__)
 
     @app.get("/health")
     def health():

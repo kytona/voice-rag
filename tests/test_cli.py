@@ -1,4 +1,6 @@
 from click.testing import CliRunner
+from unittest.mock import MagicMock, patch
+
 from voice_rag.cli.__main__ import cli
 
 
@@ -21,6 +23,7 @@ def test_cli_init_creates_config(tmp_path):
     assert result.exit_code == 0
     config_file = tmp_path / "voice-rag.yaml"
     assert config_file.exists()
+    assert "local_path" in config_file.read_text()
 
 
 def test_pyproject_has_elevenlabs_extra():
@@ -29,9 +32,6 @@ def test_pyproject_has_elevenlabs_extra():
     extras = meta.requires("voice-rag") or []
     elevenlabs_deps = [d for d in extras if "elevenlabs" in d.lower()]
     assert elevenlabs_deps, "Expected 'elevenlabs' in optional dependencies"
-
-
-from unittest.mock import MagicMock, patch
 
 def test_ingest_shows_total_and_calls_agent(tmp_path):
     """ingest_cmd should call agent.ingest() and print total chunk count."""
@@ -71,3 +71,32 @@ def test_query_command_registered():
     runner = CliRunner()
     result = runner.invoke(cli, ["--help"])
     assert "query" in result.output
+
+
+def test_doctor_reports_local_embedded_qdrant(tmp_path):
+    runner = CliRunner()
+    config_path = tmp_path / "voice-rag.yaml"
+    config_path.write_text("vector_store:\n  local_path: .qdrant\n  url: \"\"\n")
+
+    result = runner.invoke(cli, ["doctor", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert "local embedded Qdrant at .qdrant" in result.output
+    assert f"Config file found: {config_path}" in result.output
+
+
+def test_doctor_checks_remote_qdrant_when_url_is_set(tmp_path):
+    runner = CliRunner()
+    config_path = tmp_path / "voice-rag.yaml"
+    config_path.write_text("vector_store:\n  url: http://example.com:6333\n")
+
+    with patch("qdrant_client.QdrantClient") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.get_collections.return_value = MagicMock()
+        mock_client_cls.return_value = mock_client
+
+        result = runner.invoke(cli, ["doctor", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert "remote Qdrant at http://example.com:6333" in result.output
+    assert "Qdrant reachable at http://example.com:6333" in result.output

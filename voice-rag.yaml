@@ -20,9 +20,9 @@ embedding:
 
 vector_store:
   provider: qdrant          # qdrant (default; others via community PRs)
-  in_memory: false          # true = no disk persistence (good for testing)
-  local_path: .qdrant       # where to store vectors on disk
-  url: ""                   # set for remote Qdrant Cloud; overrides local_path
+  local_path: .qdrant       # local embedded Qdrant path for out-of-box usage
+  url: ""                   # set for remote Qdrant Cloud or self-hosted Qdrant
+  in_memory: null           # deprecated legacy field; keep unset in new configs
   collection_name: knowledge_base
   retrieval_limit: 5        # number of chunks returned per query
   score_threshold: 0.35     # minimum similarity score (0.0-1.0)

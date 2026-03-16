@@ -6,18 +6,36 @@ build-backend = "hatchling.build"
 name = "voice-rag"
 version = "0.1.0"
 description = "Provider-agnostic voice RAG pipeline. Plug in your voice provider, LLM, vector store, and document parsers."
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 requires-python = ">=3.11"
-authors = [
-    { name = "GT", email = "gt@gaurangtorvekar.com" },
+authors = [{ name = "Gaurang Torvekar", email = "info@kytona.com" }]
+maintainers = [{ name = "Kytona Limited", email = "info@kytona.com" }]
+keywords = [
+    "rag",
+    "voice",
+    "llm",
+    "retrieval",
+    "ai",
+    "chatbot",
+    "vector-search",
+    "elevenlabs",
+    "qdrant",
+    "fastapi",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: FastAPI",
 ]
 dependencies = [
     "fastapi>=0.109.0",
@@ -40,14 +58,8 @@ deepgram = ["deepgram-sdk>=3.0.0"]
 elevenlabs = ["elevenlabs>=1.0.0"]
 pdf = ["pymupdf>=1.24.0"]
 docx = ["python-docx>=1.0.0"]
-all = [
-    "voice-rag[anthropic,gemini,deepgram,elevenlabs,pdf,docx]",
-]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "voice-rag[all]",
-]
+all = ["voice-rag[anthropic,gemini,deepgram,elevenlabs,pdf,docx]"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.23.0", "voice-rag[all]"]
 
 [project.scripts]
 voice-rag = "voice_rag.cli.__main__:cli"
@@ -55,9 +67,24 @@ voice-rag = "voice_rag.cli.__main__:cli"
 [project.urls]
 Homepage = "https://github.com/kytona/voice-rag"
 Repository = "https://github.com/kytona/voice-rag"
+Changelog = "https://github.com/kytona/voice-rag/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["voice_rag"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "voice_rag/",
+    "tests/",
+    "data/",
+    "scripts/",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "voice-rag.yaml",
+    "pyproject.toml",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
