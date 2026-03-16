@@ -81,14 +81,13 @@ pytest tests/ -v
 
 Use [CONTRIBUTING.md](https://github.com/kytona/voice-rag/blob/main/CONTRIBUTING.md) for connector and packaging guidelines.
 
-## Building for PyPI
+## Publishing to PyPI
+
+With `PYPI_TOKEN` and the `release` environment configured in the repo, push a version tag to trigger the GitHub Actions workflow:
 
 ```bash
-cd voice-rag
-
-# Run each command separately
-bash scripts/smoke_test.sh
-python3 -m pip install build twine
-python3 -m build --no-isolation
-python3 -m twine check dist/*
+git tag v0.1.0
+git push origin v0.1.0
 ```
+
+The workflow runs smoke test → build → publish to PyPI.

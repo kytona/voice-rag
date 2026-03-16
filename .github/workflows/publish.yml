@@ -20,7 +20,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install package
-        run: pip install -e ".[elevenlabs]" build twine hatchling
+        run: pip install -e ".[elevenlabs]" build twine "hatchling<1.27"
 
       - name: Run smoke test
         run: |
@@ -48,7 +48,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install build tools
-        run: pip install build twine hatchling
+        run: pip install build twine "hatchling<1.27"
 
       - name: Build
         run: python -m build --no-isolation
