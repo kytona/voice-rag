@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
@@ -17,10 +20,15 @@ jobs:
           python-version: "3.11"
 
       - name: Install package
-        run: pip install -e ".[all]"
+        run: pip install -e ".[elevenlabs]"
 
       - name: Run smoke test
-        run: bash scripts/smoke_test.sh
+        run: |
+          python -m voice_rag.cli --help
+          TMP_DIR="$(mktemp -d)"
+          python -m voice_rag.cli init --dir "$TMP_DIR"
+          test -f "$TMP_DIR/voice-rag.yaml"
+          python -m voice_rag.cli doctor --config "$TMP_DIR/voice-rag.yaml"
 
       - name: Build artifacts
         run: python -m build --no-isolation
