@@ -1,0 +1,40 @@
+# voice-rag starter configuration
+# All fields are optional — unset fields fall back to built-in defaults.
+# API keys can be set here or via environment variables (VOICE_RAG_LLM_API_KEY, etc.)
+# Run `voice-rag init` to regenerate this file in any directory.
+
+llm:
+  provider: openai          # openai | anthropic | gemini
+  model: gpt-4o-mini        # model name for your chosen provider
+  api_key: ""               # or set VOICE_RAG_LLM_API_KEY env var
+  base_url: https://api.openai.com/v1  # swap for Ollama, Groq, Together AI, etc.
+
+voice:
+  provider: elevenlabs      # elevenlabs | deepgram
+
+embedding:
+  provider: openai          # openai (default; others coming soon)
+  model: text-embedding-3-small
+  api_key: ""               # defaults to llm.api_key if not set
+  base_url: https://api.openai.com/v1
+
+vector_store:
+  provider: qdrant          # qdrant (default; others via community PRs)
+  in_memory: false          # true = no disk persistence (good for testing)
+  local_path: .qdrant       # where to store vectors on disk
+  url: ""                   # set for remote Qdrant Cloud; overrides local_path
+  collection_name: knowledge_base
+  retrieval_limit: 5        # number of chunks returned per query
+  score_threshold: 0.35     # minimum similarity score (0.0-1.0)
+  dense_prefetch_limit: 20
+  sparse_prefetch_limit: 20
+
+ingestion:
+  chunk_size: 800           # characters per chunk
+  chunk_overlap: 120        # overlap between consecutive chunks
+  bm25_model: Qdrant/bm25   # sparse embedding model for hybrid retrieval
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  enable_debug_retrieval: false  # exposes GET /debug/retrieval — dev only, never in prod
