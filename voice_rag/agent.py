@@ -88,7 +88,7 @@ class KnowledgeAgent:
         # Embeddings
         from voice_rag.connectors.embeddings.openai import OpenAIDenseEmbedding, FastEmbedSparseEmbedding
         self._dense_embedder = OpenAIDenseEmbedding(
-            api_key=self.config.embedding.api_key or self.config.llm.api_key,
+            api_key=self.config.embedding.api_key,
             base_url=self.config.embedding.base_url,
             model=self.config.embedding.model,
         )

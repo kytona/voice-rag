@@ -11,22 +11,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class LLMConfig(BaseSettings):
     provider: str = "openai"
     model: str = "gpt-4o-mini"
-    api_key: str = ""
+    api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     base_url: str = "https://api.openai.com/v1"
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_LLM_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="LLM_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class VoiceConfig(BaseSettings):
     provider: str = "elevenlabs"
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_VOICE_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="VOICE_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class EmbeddingConfig(BaseSettings):
     provider: str = "openai"
     model: str = "text-embedding-3-small"
-    api_key: str = ""
+    api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     base_url: str = "https://api.openai.com/v1"
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_EMBEDDING_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="EMBEDDING_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class VectorStoreConfig(BaseSettings):
@@ -39,21 +39,21 @@ class VectorStoreConfig(BaseSettings):
     score_threshold: float = 0.35
     dense_prefetch_limit: int = 20
     sparse_prefetch_limit: int = 20
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_VECTOR_STORE_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="VECTOR_STORE_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class IngestionConfig(BaseSettings):
     chunk_size: int = 800
     chunk_overlap: int = 120
     bm25_model: str = "Qdrant/bm25"
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_INGESTION_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="INGESTION_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class ServerConfig(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     enable_debug_retrieval: bool = False
-    model_config = SettingsConfigDict(env_prefix="VOICE_RAG_SERVER_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="SERVER_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 class VoiceRagConfig(BaseModel):

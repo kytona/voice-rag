@@ -59,12 +59,13 @@ app = agent.create_app()
 
 | Key | Env | Default |
 | --- | --- | --- |
-| `llm.provider` | `VOICE_RAG_LLM_PROVIDER` | `openai` |
-| `llm.model` | `VOICE_RAG_LLM_MODEL` | `gpt-4o-mini` |
-| `embedding.model` | `VOICE_RAG_EMBEDDING_MODEL` | `text-embedding-3-small` |
-| `vector_store.collection_name` | `VOICE_RAG_VECTOR_STORE_COLLECTION_NAME` | `knowledge_base` |
-| `vector_store.local_path` | `VOICE_RAG_VECTOR_STORE_LOCAL_PATH` | `.qdrant` |
-| `server.port` | `VOICE_RAG_SERVER_PORT` | `8000` |
+| `llm.api_key` / `embedding.api_key` | `OPENAI_API_KEY` | (required for OpenAI) |
+| `llm.provider` | `LLM_PROVIDER` | `openai` |
+| `llm.model` | `LLM_MODEL` | `gpt-4o-mini` |
+| `embedding.model` | `EMBEDDING_MODEL` | `text-embedding-3-small` |
+| `vector_store.collection_name` | `VECTOR_STORE_COLLECTION_NAME` | `knowledge_base` |
+| `vector_store.local_path` | `VECTOR_STORE_LOCAL_PATH` | `.qdrant` |
+| `server.port` | `SERVER_PORT` | `8000` |
 
 See [voice-rag.yaml](voice-rag.yaml) for the full schema.
 
