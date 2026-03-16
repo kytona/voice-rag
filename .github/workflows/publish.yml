@@ -54,26 +54,8 @@ jobs:
           name: dist
           path: dist/
 
-  publish-testpypi:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Publish to TestPyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
-        run: |
-          pip install twine
-          twine upload --repository testpypi dist/*
-
   publish-pypi:
-    needs: publish-testpypi
+    needs: build
     runs-on: ubuntu-latest
     environment: release
     steps:

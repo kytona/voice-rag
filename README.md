@@ -59,16 +59,16 @@ app = agent.create_app()
 
 `voice-rag` reads configuration from `voice-rag.yaml` and environment variables. It does not auto-load `.env` files.
 
-| Key | Env | Default |
-| --- | --- | --- |
-| `llm.api_key` / `embedding.api_key` | `OPENAI_API_KEY` | (required for OpenAI) |
-| `llm.provider` | `LLM_PROVIDER` | `openai` |
-| `llm.model` | `LLM_MODEL` | `gpt-4o-mini` |
-| `embedding.model` | `EMBEDDING_MODEL` | `text-embedding-3-small` |
-| `vector_store.url` | `VECTOR_STORE_URL` | empty; use local `.qdrant` |
-| `vector_store.collection_name` | `VECTOR_STORE_COLLECTION_NAME` | `knowledge_base` |
-| `vector_store.local_path` | `VECTOR_STORE_LOCAL_PATH` | `.qdrant` |
-| `server.port` | `SERVER_PORT` | `8000` |
+| Key                                 | Env                            | Default                    |
+| ----------------------------------- | ------------------------------ | -------------------------- |
+| `llm.api_key` / `embedding.api_key` | `OPENAI_API_KEY`               | (required for OpenAI)      |
+| `llm.provider`                      | `LLM_PROVIDER`                 | `openai`                   |
+| `llm.model`                         | `LLM_MODEL`                    | `gpt-4o-mini`              |
+| `embedding.model`                   | `EMBEDDING_MODEL`              | `text-embedding-3-small`   |
+| `vector_store.url`                  | `VECTOR_STORE_URL`             | empty; use local `.qdrant` |
+| `vector_store.collection_name`      | `VECTOR_STORE_COLLECTION_NAME` | `knowledge_base`           |
+| `vector_store.local_path`           | `VECTOR_STORE_LOCAL_PATH`      | `.qdrant`                  |
+| `server.port`                       | `SERVER_PORT`                  | `8000`                     |
 
 See [voice-rag.yaml](https://github.com/kytona/voice-rag/blob/main/voice-rag.yaml) for the full schema.
 
@@ -80,3 +80,15 @@ pytest tests/ -v
 ```
 
 Use [CONTRIBUTING.md](https://github.com/kytona/voice-rag/blob/main/CONTRIBUTING.md) for connector and packaging guidelines.
+
+## Building for PyPI
+
+```bash
+cd voice-rag
+
+# Run each command separately
+bash scripts/smoke_test.sh
+python3 -m pip install build twine
+python3 -m build --no-isolation
+python3 -m twine check dist/*
+```
