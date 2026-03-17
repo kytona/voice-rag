@@ -69,3 +69,26 @@ def test_chat_completions_rejects_non_stream():
         json={"model": "custom", "stream": False, "messages": [{"role": "user", "content": "Hello"}]},
     )
     assert response.status_code == 400
+
+
+def test_chat_completions_maps_custom_llm_placeholder_to_configured_model():
+    agent = _make_test_agent()
+
+    async def fake_stream(*args, **kwargs):
+        yield 'data: {"id":"1","object":"chat.completion.chunk","created":1,"model":"test","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}\n\n'
+        yield 'data: {"id":"1","object":"chat.completion.chunk","created":1,"model":"test","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n'
+        yield "data: [DONE]\n\n"
+
+    stream_mock = MagicMock(side_effect=fake_stream)
+    agent._llm_client.stream_chat_completion = stream_mock
+    app = create_app(agent)
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/chat/completions",
+        json={"model": "custom-llm", "stream": True, "messages": [{"role": "user", "content": "Hello"}]},
+    )
+
+    assert response.status_code == 200
+    assert "[DONE]" in response.text
+    assert agent._llm_client.stream_chat_completion.call_args.kwargs["model"] == agent.config.llm.model

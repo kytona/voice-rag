@@ -70,8 +70,9 @@ def create_app(agent: KnowledgeAgent) -> FastAPI:
 
         augmented_messages = build_augmented_messages(payload.messages, chunks)
         # Use the model from the request if it's meaningful, fall back to configured default.
-        # ElevenLabs sends "custom" as the model name, so we treat that as "use config default".
-        effective_model = agent.config.llm.model if payload.model in ("", "custom") else payload.model
+        # ElevenLabs may send placeholders like "custom" or "custom-llm", which should
+        # resolve to the configured backend model rather than being forwarded upstream.
+        effective_model = agent.config.llm.model if payload.model in ("", "custom", "custom-llm") else payload.model
         stream = agent._llm_client.stream_chat_completion(
             messages=augmented_messages, model=effective_model,
         )
