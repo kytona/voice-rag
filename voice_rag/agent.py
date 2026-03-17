@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from voice_rag.core.config import VoiceRagConfig
-from voice_rag.core.models import Chunk, RetrievedChunk
+from voice_rag.core.models import Chunk, Document, RetrievedChunk
 
 logger = logging.getLogger(__name__)
 
@@ -131,9 +131,45 @@ class KnowledgeAgent:
         cls = _import_class(parser_path)
         return cls()
 
-    def ingest(self, path: str | Path, recreate: bool = False) -> int:
-        from voice_rag.core.chunking import chunk_text, chunk_markdown
+    def _document_is_markdown(self, doc: Document) -> bool:
+        content_type = str(doc.metadata.get("content_type", "")).lower()
+        doc_format = str(doc.metadata.get("format", "")).lower()
+        return doc.source.lower().endswith(".md") or "markdown" in content_type or doc_format == "markdown"
 
+    def _build_chunks(self, doc: Document) -> list[Chunk]:
+        from voice_rag.core.chunking import chunk_markdown, chunk_text
+
+        chunk_size = self.config.ingestion.chunk_size
+        chunk_overlap = self.config.ingestion.chunk_overlap
+
+        if self._document_is_markdown(doc):
+            text_chunks = chunk_markdown(doc.content, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        else:
+            text_chunks = chunk_text(doc.content, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+
+        return [
+            Chunk(text=text, source=doc.source, chunk_index=index, metadata=dict(doc.metadata))
+            for index, text in enumerate(text_chunks)
+        ]
+
+    def ingest_documents(self, documents: list[Document], recreate: bool = False) -> int:
+        total = 0
+        should_recreate = recreate
+
+        for doc in documents:
+            chunks = self._build_chunks(doc)
+            if not chunks:
+                continue
+
+            dense_vecs = self._dense_embedder.embed([chunk.text for chunk in chunks])
+            sparse_vecs = self._sparse_embedder.embed([chunk.text for chunk in chunks])
+            count = self._vector_store.upsert(chunks, dense_vecs, sparse_vecs, recreate=should_recreate)
+            should_recreate = False
+            total += count
+
+        return total
+
+    def ingest(self, path: str | Path, recreate: bool = False) -> int:
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"Path not found: {path}")
@@ -149,27 +185,13 @@ class KnowledgeAgent:
 
         total = 0
         should_recreate = recreate
-        chunk_size = self.config.ingestion.chunk_size
-        chunk_overlap = self.config.ingestion.chunk_overlap
 
         for file_path in files:
             loader = self._get_loader(file_path.suffix.lower())
             doc = loader.load(file_path)
-
-            if file_path.suffix.lower() == ".md":
-                text_chunks = chunk_markdown(doc.content, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-            else:
-                text_chunks = chunk_text(doc.content, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-
-            if not text_chunks:
-                continue
-
-            chunks = [Chunk(text=t, source=doc.source, chunk_index=i) for i, t in enumerate(text_chunks)]
-            dense_vecs = self._dense_embedder.embed([c.text for c in chunks])
-            sparse_vecs = self._sparse_embedder.embed([c.text for c in chunks])
-
-            count = self._vector_store.upsert(chunks, dense_vecs, sparse_vecs, recreate=should_recreate)
-            should_recreate = False
+            count = self.ingest_documents([doc], recreate=should_recreate)
+            if count > 0:
+                should_recreate = False
             total += count
             logger.info("Ingested %d chunks from %s", count, file_path)
 
