@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import logging
-from typing import Any, TYPE_CHECKING
+import time
+import uuid
+from typing import Any, AsyncIterator, TYPE_CHECKING
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
@@ -9,12 +12,31 @@ from pydantic import BaseModel, Field
 
 from voice_rag._version import __version__
 from voice_rag.core.retrieval import build_augmented_messages
-from voice_rag.core.streaming import extract_latest_user_message
+from voice_rag.core.streaming import extract_latest_user_message, format_sse
 
 if TYPE_CHECKING:
     from voice_rag.agent import KnowledgeAgent
 
 logger = logging.getLogger(__name__)
+
+
+async def _safe_stream(stream: AsyncIterator[str], model: str) -> AsyncIterator[str]:
+    """Wrap an SSE stream so that exceptions are caught and a terminal chunk is
+    always emitted, preventing ElevenLabs from seeing an abrupt connection drop."""
+    try:
+        async for chunk in stream:
+            yield chunk
+    except Exception as exc:
+        logger.error("LLM stream failed: %s", exc)
+        terminal = {
+            "id": f"chatcmpl-{uuid.uuid4().hex}",
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": model,
+            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+        }
+        yield format_sse(json.dumps(terminal))
+        yield format_sse("[DONE]")
 
 
 class ChatCompletionRequest(BaseModel):
@@ -73,10 +95,10 @@ def create_app(agent: KnowledgeAgent) -> FastAPI:
         # ElevenLabs may send placeholders like "custom" or "custom-llm", which should
         # resolve to the configured backend model rather than being forwarded upstream.
         effective_model = agent.config.llm.model if payload.model in ("", "custom", "custom-llm") else payload.model
-        stream = agent._llm_client.stream_chat_completion(
+        raw_stream = agent._llm_client.stream_chat_completion(
             messages=augmented_messages, model=effective_model,
         )
-        return StreamingResponse(stream, media_type="text/event-stream")
+        return StreamingResponse(_safe_stream(raw_stream, effective_model), media_type="text/event-stream")
 
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest):
